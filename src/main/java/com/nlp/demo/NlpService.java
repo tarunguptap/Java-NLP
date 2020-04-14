@@ -18,6 +18,7 @@ import edu.stanford.nlp.sentiment.SentimentCoreAnnotations;
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 import edu.stanford.nlp.util.CoreMap;
 
+
 /**
  * We are using stanford-corenlp in this module. which is licensed under GPL. so before using Please have a look on 
  * https://stanfordnlp.github.io/CoreNLP/index.html#license.
@@ -35,16 +36,16 @@ import edu.stanford.nlp.util.CoreMap;
  *
  */
 
+ 
+ 
 public class NlpService {
 
 	public static void main(String[] args) {
 		List<String> stringList = getSampleArrayList();
 		Map<String, Set<String>> content = findSentiment(stringList);
-		Map<String, Set<String>> map = new HashMap<>();
-		content.entrySet().stream().forEach(entry -> map.putAll(filterSetOfMessages(entry.getValue())));
-		map.entrySet().stream().forEach(mapContent -> {
-			System.out.println(" map content is::::: " + mapContent);
-		});
+		Set<String> filteredSet = new HashSet<String>();
+		content.entrySet().stream().forEach(entry -> filteredSet.addAll(filterSetOfMessages(entry.getValue())));
+		System.out.println("----------------" + filteredSet);
 	}
 
 	private static List<String> getSampleArrayList() {
@@ -58,10 +59,11 @@ public class NlpService {
 		stringList.add("I am Software Engineer");
 		stringList.add("I am Software Developer");
 		stringList.add("I am Engineer");
-		stringList.add("i am facing VPN slowness");
-		stringList.add("i faced issue where VPN is performing slow");
-		stringList.add("i am facing VPN slowness");
-		stringList.add("i am getting issues related to VPN slowness");
+		
+		stringList.add("i am facing vpn slowness");
+		stringList.add("i faced issue where vpn is performing slow");
+		stringList.add("i am facing vpn slowness");
+		stringList.add("i am getting issues related to vpn slowness");
 		stringList.add("there are VPN slowness issues");
 		stringList.add("How are you");
 		stringList.add("how are you doing");
@@ -71,6 +73,7 @@ public class NlpService {
 		return stringList;
 	}
 
+	
 	// in this method we are grouping list's content into sentiments form i.e
 	// whether sentence is positive, negative o neutral.
 	// we did it just to reduce comparison list size and get unique context based
@@ -112,16 +115,16 @@ public class NlpService {
 				}
 			}
 		}
-		System.out.println("-------sentimentMap --------- " + sentimentMap);
+		System.out.println("-------sentimentMap --------- "+sentimentMap);
 		return sentimentMap;
 	}
 
 	// here we are using POS annotation to compare unique context based messages
-	public static Map<String, Set<String>> filterSetOfMessages(Set<String> similarSentimentList) {
-		Map<String, Set<String>> finalMap = new HashMap<String, Set<String>>();
+	public static Set<String> filterSetOfMessages(Set<String> similarSentimentList) {
 		Set<String> existingSet = new HashSet<String>();
 		existingSet.addAll(similarSentimentList);
 		Set<String> filteredSet = new HashSet<String>();
+		Set<String> removedNoun = new HashSet<String>();
 		MaxentTagger maxentTagger = new MaxentTagger("english-left3words-distsim.tagger");
 		for (String similarSentiment : similarSentimentList) {
 			Set<String> addedNoun = new HashSet<String>();
@@ -130,40 +133,36 @@ public class NlpService {
 			for (int i = 0; i < eachTag.length; i++) {
 				String value = eachTag[i].split("_")[0];
 				String type = eachTag[i].split("_")[1];
-				// here NNP,NN and PRP are grammatical representatiuoins where NN represent Noun, NNP represent noun with Preposition etc. 
 				if ((type.equals("NNP") || type.equals("NN") || type.equals("PRP")) && !addedNoun.contains(value)) {
 					addedNoun.add(value);
 				}
 			}
-			Boolean isContentExist = validateIfNounExistInList(filteredSet, addedNoun, finalMap, similarSentiment);
-			if (CollectionUtils.isEmpty(addedNoun) || !isContentExist) {
+			if(CollectionUtils.isEmpty(addedNoun)) {
 				filteredSet.add(similarSentiment);
-				finalMap.put(similarSentiment, new HashSet<String>(1));
+			}else if (!validateIfNounExistInList(filteredSet, addedNoun)) {
+				removedNoun.addAll(addedNoun);
+				filteredSet.add(similarSentiment);
 			}
+
 		}
-		return finalMap;
+		return filteredSet;
 
 	}
 
 	
 	// below method is used to filter if message is similar to context whichg we already saves in Map as a key or not
 	// NOTE: below for loop is not optimal approach but Time Constraint lead to this and it need to be removed in future. 
-	public static Boolean validateIfNounExistInList(Set<String> filteredSet, Set<String> nouns,
-			Map<String, Set<String>> finalMap, String currentSentiment) {
+	public static Boolean validateIfNounExistInList(Set<String> filteredSet, Set<String> nouns) {
 		Boolean removeSentance = Boolean.FALSE;
-		for (String nounValue : nouns) {
-			for (String similarSentimentContent : filteredSet) {
-				if (similarSentimentContent.contains(nounValue)) {
-					Set<String> updatedValues = Objects.nonNull(finalMap.get(similarSentimentContent))
-							? finalMap.get(similarSentimentContent)
-							: new HashSet<String>();
-					updatedValues.add(currentSentiment);
-					finalMap.put(similarSentimentContent, updatedValues);
+		for(String nounValue:nouns) {
+			for(String similarSentimentContent:filteredSet) {
+				if(similarSentimentContent.contains(nounValue)) {
 					removeSentance = Boolean.TRUE;
 				}
 			}
 		}
 		return removeSentance;
 	}
+
 
 }
