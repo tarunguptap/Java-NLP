@@ -1,6 +1,5 @@
 package com.nlp.demo;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,38 +36,11 @@ import edu.stanford.nlp.util.CoreMap;
 
 public class NlpService {
 
-	public static void main(String[] args) {
-		List<String> stringList = getSampleArrayList();
-		Map<String, Set<String>> content = findSentiment(stringList);
-		Map<String, Set<String>> map = new HashMap<>();
-		content.entrySet().stream().forEach(entry -> map.putAll(filterSetOfMessages(entry.getValue())));
-		map.entrySet().stream().forEach(mapContent -> {
-			System.out.println(" map content is::::: " + mapContent);
-		});
-	}
-
-	private static List<String> getSampleArrayList() {
-		List<String> stringList = new ArrayList<String>();
-		stringList.add("its is grateful beautiful friends are fulfilling an incredibly joyful accomplishment.");
-		stringList.add("What an truly terrible idea");
-		stringList.add("How are you");
-		stringList.add("VPN is slow");
-		stringList.add("VPN is down");
-		stringList.add("VPN is worst");
-		stringList.add("I am Software Engineer");
-		stringList.add("I am Software Developer");
-		stringList.add("I am Engineer");
-		stringList.add("i am facing VPN slowness");
-		stringList.add("i faced issue where VPN is performing slow");
-		stringList.add("i am facing VPN slowness");
-		stringList.add("i am getting issues related to VPN slowness");
-		stringList.add("there are VPN slowness issues");
-		stringList.add("How are you");
-		stringList.add("how are you doing");
-		stringList.add("how do you do");
-		stringList.add("You are bad guy");
-		stringList.add("You are not good guy");
-		return stringList;
+	public Map<String, Set<String>> getFilteredMap(List<String> messageList) {
+		Map<String, Set<String>> content = findSentiment(messageList);
+		Map<String, Set<String>> filteredMap = new HashMap<>();
+		content.entrySet().stream().forEach(entry -> filteredMap.putAll(filterSetOfMessages(entry.getValue())));
+		return filteredMap;
 	}
 
 	// in this method we are grouping list's content into sentiments form i.e
@@ -130,7 +102,8 @@ public class NlpService {
 			for (int i = 0; i < eachTag.length; i++) {
 				String value = eachTag[i].split("_")[0];
 				String type = eachTag[i].split("_")[1];
-				// here NNP,NN and PRP are grammatical representatiuoins where NN represent Noun, NNP represent noun with Preposition etc. 
+				// here NNP,NN and PRP are grammatical representatiuoins where NN represent
+				// Noun, NNP represent noun with Preposition etc.
 				if ((type.equals("NNP") || type.equals("NN") || type.equals("PRP")) && !addedNoun.contains(value)) {
 					addedNoun.add(value);
 				}
@@ -145,9 +118,10 @@ public class NlpService {
 
 	}
 
-	
-	// below method is used to filter if message is similar to context whichg we already saves in Map as a key or not
-	// NOTE: below for loop is not optimal approach but Time Constraint lead to this and it need to be removed in future. 
+	// below method is used to filter if message is similar to context whichg we
+	// already saves in Map as a key or not
+	// NOTE: below for loop is not optimal approach but Time Constraint lead to this
+	// and it need to be removed in future.
 	public static Boolean validateIfNounExistInList(Set<String> filteredSet, Set<String> nouns,
 			Map<String, Set<String>> finalMap, String currentSentiment) {
 		Boolean removeSentance = Boolean.FALSE;
